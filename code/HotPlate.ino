@@ -14,10 +14,10 @@
 #define temp 7
 #define res1 4
 #define res2 5
-#define plate 3
+#define plate 9
 
-#define BTN_UP   12
-#define BTN_DOWN 11
+#define BTN_UP   6
+#define BTN_DOWN 13
 
 const double R0 = 100000.0;
 const double T0 = 25.0 + 273.15;
@@ -28,8 +28,8 @@ double RES = RES1;
 static unsigned long lastSwitchTime = 0;
 const unsigned long switchCooldown = 500;
 const int numValues = 21;
-double tHot[numValues] = { 20.2, 25, 40, 60.2, 80.2, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240 };
-double errorValues[numValues] = { 2.50,  0.50,  0.07, -0.20, -2.10, -2.40, -3.40, -5.07, -3.80, -5.53, -8.53, -9.05, -11.33, -11.75, -15.75, -18.40, -22.24, -24.48, -26.87, -30.75, -31.45 };
+//double tHot[numValues] = { 20.2, 25, 40, 60.2, 80.2, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180, 190, 200, 210, 220, 230, 240 };
+//double errorValues[numValues] = { 2.50,  0.50,  0.07, -0.20, -2.10, -2.40, -3.40, -5.07, -3.80, -5.53, -8.53, -9.05, -11.33, -11.75, -15.75, -18.40, -22.24, -24.48, -26.87, -30.75, -31.45 };
 
 unsigned long lastMillis = 0;
 const int samples = 40;
@@ -74,18 +74,6 @@ bool ex = false;
 double Kp = 4;
 double Ki = 0.001;
 double Kd = 90;
-
-/*double Kp_low  = 1.4;
-double Ki_low  = 0.001;
-double Kd_low  = 90;
-
-double Kp_mid  = 2.2;
-double Ki_mid  = 0.001;
-double Kd_mid  = 90;
-
-/*double Kp_high  = 3.2;
-double Ki_high  = 0.0004; 
-double Kd_high  = 7;*/
 
 PID myPID(&avgTemp, &output, &setPoint, Kp, Ki, Kd, DIRECT);
 Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
@@ -268,7 +256,6 @@ void loop() {
     for(;;); 
   }
   lastTemp = avgTemp;
-  //updatePID();
   myPID.Compute();
   if (avgTemp > setPoint + 0.5) {
     myPID.SetMode(MANUAL);
@@ -277,15 +264,6 @@ void loop() {
   analogWrite(plate, (int)output);
 }
 
-/*void updatePID() {
-  if (setPoint > 200) {
-    myPID.SetTunings(Kp_high, Ki_high, Kd_high);
-  } else if(setPoint >= 180 && setPoint <= 200) {
-    myPID.SetTunings(Kp_mid,  Ki_mid,  Kd_mid);
-  } else {
-    myPID.SetTunings(Kp_low,  Ki_low,  Kd_low);
-  }
-}*/
 void drawTemp(double t, double setT, double Mode, int State, int HeatingProgress) {
   static int circleSize = 0;
   if(Mode == 0) { // idle
@@ -312,14 +290,7 @@ void drawTemp(double t, double setT, double Mode, int State, int HeatingProgress
         display.drawBitmap(HOURGLASS_X, HOURGLASS_Y, frames1[currentFrame], FRAME_WIDTH, FRAME_HEIGHT, WHITE);
         currentFrame = (currentFrame + 1) % FRAME_COUNT1;
       }
-    } /*else if(State == 3) { //maintain
-      if (currentMillis - previousMillis >= 100) {
-        previousMillis = currentMillis;
-        circleSize++;
-        if(circleSize > 15) circleSize = 0;
-        display.drawCircle(112, 16, circleSize, 1);
-      }
-    }*/
+    }
     if(Mode > 1) {
       display.drawLine(0, 31, HeatingProgress, 31, 1);
       display.fillRoundRect(HeatingProgress-10, 28, 12, 7, 2, 0);
@@ -384,72 +355,3 @@ void introAnimation() {
   display.clearDisplay();
   display.display();
 }
-/*
-if (avgTemp > thr && wRes) {
-  digitalWrite(res1, HIGH); 
-  digitalWrite(res2, LOW); 
-  RES = RES1; wRes = false;
-} else if (avgTemp < thr && !wRes) {
-  digitalWrite(res1, LOW); 
-  digitalWrite(res2, HIGH); 
-  RES = RES2; wRes = true;
-}
-
-
-
-#define TEMP_PIN A7
-#define res1 4 
-#define res2 5
-
-const int R_FIXED = 1000;     // 1 kΩ otpornik
-const double R0 = 100000.0;        // 100 kΩ na 25°C
-const double T0 = 298.15;          // 25°C u Kelvinima
-const double BETA = 3950.0;
-
-int adc;
-const int samples = 50;
-int s = 0;
-double sumTemp = 0.0;
-double sumRes = 0.0;
-double avgTemp = 0.0;
-double avgRes = 0.0;
-bool finished = false;
-
-void setup() {
-  Serial.begin(9600);
-  pinMode(res1, OUTPUT);
-  pinMode(res2, OUTPUT);
-  digitalWrite(res1, HIGH); 
-  digitalWrite(res2, LOW); 
-}
-
-void loop() {
-  if(s < samples) {
-    adc = analogRead(TEMP_PIN);
-    if (adc == 0) adc = 1;  
-    double resistance = R_FIXED * ((1023.0 / adc) - 1.0);
-    double tempK = 1.0 / ((1.0 / BETA) * log(resistance / R0) + (1.0 / T0));
-    double tempC = tempK - 273.15;
-    sumTemp += tempC;
-    sumRes += resistance;
-    s++;
-    delayMicroseconds(1000);
-  }else finished = true;
-  if(finished) {
-    avgTemp = sumTemp / samples;
-    avgRes  = sumRes / samples;
-
-    Serial.print("ADC: ");
-    Serial.print(adc);
-    Serial.print(" | R: ");
-    Serial.print(avgRes, 0);
-    Serial.print(" Ω | Temp: ");
-    Serial.print(avgTemp, 2);
-    Serial.println(" °C");
-
-    sumTemp = 0.0;
-    sumRes  = 0.0;
-    s = 0;
-    finished = false;
-  }
-}*/
