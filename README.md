@@ -1,1 +1,1 @@
-sdasdas
+This is my hot plate, which has two temperature curves: one for leaded solder paste (183 °C) and one for lead-free paste. It consists of a 400 W 220 V PTC heating plate that is spaced 5.5 cm from the enclosure using screws. The temperature is measured using a 100 k NTC sensor taken from cheap Chinese food thermometers (TP-101). The heating plate is also grounded as shown in the picture.
