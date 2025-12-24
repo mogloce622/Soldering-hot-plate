@@ -15,6 +15,7 @@
 #define res1 4
 #define res2 5
 #define plate 9
+#define buzzer 8
 
 #define BTN_UP   6
 #define BTN_DOWN 13
@@ -69,6 +70,7 @@ int targetTemp = 0;
 int targetOffset = 0;
 bool done = false;
 bool ex = false;
+bool buz = false;
 
 //pid
 double Kp = 4;
@@ -83,6 +85,7 @@ void setup() {
   pinMode(temp, INPUT);
   pinMode(res1, OUTPUT);
   pinMode(res2, OUTPUT);
+  pinMode(buzzer, OUTPUT);
   digitalWrite(res1, HIGH);
   digitalWrite(res2, LOW);
 
@@ -110,6 +113,13 @@ void setup() {
 void loop() {
   unsigned long nowMillis = millis();
 
+  if(buz) {
+    digitalWrite(buzzer, HIGH);
+    delay(200);
+    digitalWrite(buzzer, LOW);
+    buz = false;
+  }
+
   //Button 
   String btn = getButtonAction();
   if(mode == 0 && menu == false) {
@@ -117,7 +127,7 @@ void loop() {
   } 
   else if(mode > 0 && menu == false) {
     if(btn == "select") { menu = true; btn = ""; } 
-    else if(btn == "exit") { setPoint = 0; targetOffset = 0; heatingState = 1; ex = true; }
+    else if(btn == "exit") { setPoint = 0; targetOffset = 0; heatingState = 1; ex = true; curveStep = 0; }
     if(mode == 1 && menu == false) {
       if(btn == "up") { setPoint += 5; if (setPoint > 250) setPoint = 250; }
       else if(btn == "down") { setPoint -= 5; if (setPoint < 0) setPoint = 0; }
@@ -176,6 +186,7 @@ void loop() {
       unsigned long holdTime = (unsigned long)curveTime * 1000UL;
       if (nowMillis - holdStart >= holdTime) {
         curveStep++;
+        buz = true;
         holding = false;
         if (curveStep >= arraySize) {
           setPoint = 0;
